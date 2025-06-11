@@ -30,8 +30,8 @@ const UserDashboard = () => {
     var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"]
     const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
 
-    const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
-    const API_KEY = process.env.REACT_APP_API_KEY;
+    const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
+    const API_KEY = import.meta.env.VITE_API_KEY;
 
 
     const handleSyncWithGoogle = async () => {
