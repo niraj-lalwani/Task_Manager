@@ -33,6 +33,22 @@ const TaskForm = ({ type, initialState, onSubmit, onCloseClick }) => {
                             <label className='label'>Title</label>
                             <input type="text" name="title" value={formData.title} onChange={handleOnChange} placeholder='Enter Task Title' className='input' />
                         </div>
+
+                        <div className='inputBox'>
+                            <label className='label'>Summary</label>
+                            <input type="text" name="summary" value={formData.summary} onChange={handleOnChange} placeholder='Enter Task Summary' className='input' />
+                        </div>
+
+                        <div className='inputBox'>
+                            <label className='label'>Start Date-Time</label>
+                            <input type="datetime-local" name="startDateTime" value={formData.startDateTime} onChange={handleOnChange} className='input' />
+                        </div>
+
+                        <div className='inputBox'>
+                            <label className='label'>End Date-Time</label>
+                            <input type="datetime-local" name="endDateTime" value={formData.endDateTime} onChange={handleOnChange} className='input' />
+                        </div>
+
                         <div className='inputBox'>
                             <label className='label'>Status</label>
                             <select name="status" value={formData.status} onChange={handleOnChange} className='input' >
@@ -41,6 +57,8 @@ const TaskForm = ({ type, initialState, onSubmit, onCloseClick }) => {
                                 <option value="compeleted">Compeleted</option>
                             </select>
                         </div>
+
+
                         <div className='inputBox'>
                             <label className='label'>Description</label>
                             <textarea rows={3} name="description" value={formData.description} onChange={handleOnChange} placeholder='Enter Task Description' className='input' />
@@ -57,7 +75,7 @@ const TaskForm = ({ type, initialState, onSubmit, onCloseClick }) => {
                         </button>
                         <button className='button !text-black bg-white border-2' onClick={(e) => {
                             e.preventDefault();
-                            setFormData({title:"",status:"pending",description:""})
+                            setFormData({ title: "", status: "pending", description: "", startDateTime: "", endDateTime: "" })
                         }}>Reset</button>
                     </div>
                 </form>

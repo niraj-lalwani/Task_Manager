@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Plus, SquarePen, Trash2 } from 'lucide-react';
 import TaskForm from '../components/TaskForm';
-import { createTask, deleteTask, getUserTask, updateTask } from '../firebase/firestore';
+import { createTask, deleteTask, getUserTask, updateTask, getUserUnsyncedTasks } from '../firebase/firestore';
 import { toast } from 'react-toastify';
 
 const UserDashboard = () => {
@@ -37,9 +37,7 @@ const UserDashboard = () => {
     const handleSyncWithGoogle = async () => {
         const gapi = window.gapi;
 
-        await new Promise((resolve) => {
-            gapi.load('client', resolve);
-        });
+        await new Promise((resolve) => gapi.load('client', resolve));
 
         await gapi.client.init({
             apiKey: API_KEY,
@@ -52,40 +50,57 @@ const UserDashboard = () => {
             callback: async (tokenResponse) => {
                 gapi.client.setToken(tokenResponse);
 
-                const now = new Date();
-                const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-                const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone; // Use the user's actual time zone
-
-                // --- SIMPLIFIED EVENT OBJECT ---
-                const event = {
-                    summary: 'Test Event from App', // Required
-                    // description: 'This is a test event.', // Optional - remove for test
-                    start: {
-                        dateTime: now.toISOString(),
-                        timeZone: localTimeZone, // Use the user's timezone
-                    },
-                    end: {
-                        dateTime: oneHourLater.toISOString(),
-                        timeZone: localTimeZone, // Use the user's timezone
-                    },
-                    // recurrence: ['RRULE:FREQ=DAILY;COUNT=2'], // Optional - remove for test
-                    // attendees: [{ email: 'lpage@example.com' }], // Optional - remove for test
-                    // reminders: { useDefault: true }, // Optional - use default or remove
-                };
-
-                console.log('Attempting to create event with:', event); // Log the final event object
-
                 try {
-                    const request = await gapi.client.calendar.events.insert({
-                        calendarId: 'primary',
-                        resource: event,
-                    });
-                    console.log("Event created:", request.result);
-                    window.open(request.result.htmlLink, '_blank');
-                    toast.success("Event added to Google Calendar!");
+                    const unsyncedTasks = await getUserUnsyncedTasks(user.uid);
+
+                    if (unsyncedTasks.length === 0) {
+                        toast.info("All tasks are already synced!");
+                        return;
+                    }
+
+                    const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+                    for (const task of unsyncedTasks) {
+                        const now = new Date();
+                        const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+
+                        const event = {
+                            summary: task.title || 'Untitled Task',
+                            description: task.description || '',
+                            start: {
+                                dateTime: now.toISOString(),
+                                timeZone: localTimeZone,
+                            },
+                            end: {
+                                dateTime: oneHourLater.toISOString(),
+                                timeZone: localTimeZone,
+                            },
+                        };
+
+                        try {
+                            const request = await gapi.client.calendar.events.insert({
+                                calendarId: 'primary',
+                                resource: event,
+                            });
+                            console.log('request: ', request);
+
+                            console.log("Event created:", request.result);
+                            await updateTask({
+                                ...task,
+                                linkedWithGoogleCalendar: true,
+                            });
+
+                        } catch (eventErr) {
+                            console.error("Failed to sync task:", task.title, eventErr);
+                        }
+                    }
+
+                    toast.success("Tasks synced with Google Calendar!");
+                    getUserTaskList(); // Refresh tasks in UI
+
                 } catch (err) {
-                    console.error("Error creating event:", err.result?.error || err); // Log the full error for more details
-                    toast.error("Failed to add event to Google Calendar.");
+                    console.error("Error syncing with Google:", err);
+                    toast.error("Failed to sync tasks with Google Calendar.");
                 }
             },
         });
@@ -171,11 +186,15 @@ const UserDashboard = () => {
 
             <div className='w-[90%] mx-auto grid grid-cols-3 gap-5 px-3'>
                 {
-                    userTasks?.map(({ title, description, status, id }, index) => {
+                    userTasks?.map(({ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar }, index) => {
                         return <div key={id} className='p-3 rounded-md border border-gray-400 shadow-sm relative'>
                             <p className='text-sm'><span className='font-semibold'>Title: </span>{title}</p>
                             <p className='text-sm'><span className='font-semibold'>Description: </span>{description}</p>
                             <p className='text-sm'><span className='font-semibold'>Status: </span>{status}</p>
+                            <p className='text-sm'><span className='font-semibold'>Status: </span>{summary}</p>
+                            <p className='text-sm'><span className='font-semibold'>Start Date Time: </span>{startDateTime}</p>
+                            <p className='text-sm'><span className='font-semibold'>End Date Time: </span>{endDateTime}</p>
+                            <p className='text-sm'><span className='font-semibold'>linkedWithGoogleCalendar:  </span>{linkedWithGoogleCalendar ? "true" : "false"}</p>
 
                             <div className='absolute top-3 right-3 flex gap-2'>
                                 <span className='cursor-pointer hover:text-blue-500' onClick={() => {
