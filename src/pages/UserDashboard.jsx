@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { FcCalendar } from "react-icons/fc";
 import { useAuth } from '../context/AuthContext'
 import { Plus, SquarePen, Trash2 } from 'lucide-react';
 import TaskForm from '../components/TaskForm';
@@ -6,7 +7,6 @@ import { createTask, deleteTask, getUserTask, updateTask, getUserUnsyncedTasks }
 import { toast } from 'react-toastify';
 
 const UserDashboard = () => {
-
     const { user, } = useAuth();
 
     const [taskForm, setTaskForm] = useState({
@@ -16,16 +16,10 @@ const UserDashboard = () => {
     })
     const [userTasks, setUserTasks] = useState([]);
 
-
     const getUserTaskList = async () => {
         const taskList = await getUserTask(user.uid);
         setUserTasks(taskList);
     }
-
-
-
-
-
 
     var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"]
     const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
@@ -33,8 +27,7 @@ const UserDashboard = () => {
     const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
     const API_KEY = import.meta.env.VITE_API_KEY;
 
-
-    const handleSyncWithGoogle = async () => {
+    const handleSyncWithGoogle = async (unsyncedTasks) => {
         const gapi = window.gapi;
 
         await new Promise((resolve) => gapi.load('client', resolve));
@@ -51,8 +44,6 @@ const UserDashboard = () => {
                 gapi.client.setToken(tokenResponse);
 
                 try {
-                    const unsyncedTasks = await getUserUnsyncedTasks(user.uid);
-
                     if (unsyncedTasks.length === 0) {
                         toast.info("All tasks are already synced!");
                         return;
@@ -61,32 +52,31 @@ const UserDashboard = () => {
                     const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
                     for (const task of unsyncedTasks) {
-                        const now = new Date();
-                        const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-
                         const event = {
-                            summary: task.title || 'Untitled Task',
+                            title: task.title || 'Untitled Task',
+                            summary: task.summary || 'Untitled Task',
                             description: task.description || '',
                             start: {
-                                dateTime: now.toISOString(),
+                                dateTime: new Date(task.startDateTime).toISOString(),
                                 timeZone: localTimeZone,
                             },
                             end: {
-                                dateTime: oneHourLater.toISOString(),
+                                dateTime: new Date(task.endDateTime).toISOString(),
                                 timeZone: localTimeZone,
                             },
                         };
 
+                        console.log('event: ', event);
                         try {
                             const request = await gapi.client.calendar.events.insert({
                                 calendarId: 'primary',
                                 resource: event,
                             });
-                            console.log('request: ', request);
+                            const googleEventId = request.result.id;
 
-                            console.log("Event created:", request.result);
                             await updateTask({
                                 ...task,
+                                googleEventId,
                                 linkedWithGoogleCalendar: true,
                             });
 
@@ -121,9 +111,47 @@ const UserDashboard = () => {
         }
     }
 
+    const updateGoogleCalendarEvent = async (task) => {
+        if (!task.linkedWithGoogleCalendar) {
+            return false;
+        }
+
+        const gapi = window.gapi;
+        alert("Update Called")
+
+        const updatedEvent = {
+            title: task.title,
+            summary: task.summary,
+            description: task.description,
+            start: {
+                dateTime: new Date(task.startDateTime).toISOString(),
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            },
+            end: {
+                dateTime: new Date(task.endDateTime).toISOString(),
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            },
+        };
+
+        try {
+            const response = await gapi.client.calendar.events.update({
+                calendarId: 'primary',
+                eventId: task.googleEventId,
+                resource: updatedEvent,
+            });
+
+            console.log('Event updated:', response.result);
+            toast.success('Google Calendar event updated!');
+        } catch (error) {
+            console.error('Failed to update event:', error);
+            toast.error('Failed to update event in Google Calendar.');
+        }
+    };
+
     const handleEditTask = async (updatedTaskData) => {
         try {
             await updateTask(updatedTaskData);
+            await updateGoogleCalendarEvent(updatedTaskData)
             getUserTaskList();
             toast.success("Task Updated Successfully");
             setTaskForm({ ...taskForm, show: false });
@@ -133,10 +161,30 @@ const UserDashboard = () => {
         }
     }
 
+    const deleteGoogleCalendarEvent = async (googleEventId) => {
+        const gapi = window.gapi;
 
-    const handleDeleteTask = async (taskId) => {
+        try {
+            await gapi.client.calendar.events.delete({
+                calendarId: 'primary',
+                eventId: googleEventId,
+            });
+
+            console.log('Event deleted');
+            toast.success('Google Calendar event deleted!');
+        } catch (error) {
+            console.error('Failed to delete event:', error);
+            toast.error('Failed to delete Google Calendar event.');
+        }
+    };
+
+    const handleDeleteTask = async (taskId, linkedWithGoogleCalendar, googleEventId) => {
         try {
             await deleteTask(taskId);
+
+            if (linkedWithGoogleCalendar && googleEventId) {
+                await deleteGoogleCalendarEvent(googleEventId);
+            }
             getUserTaskList();
             toast.success("Task Deleted Successfully");
         } catch (error) {
@@ -145,87 +193,154 @@ const UserDashboard = () => {
         }
     }
 
-
     useEffect(() => {
         getUserTaskList();
-
     }, []);
-
-
-
 
     return (
         <>
-            <div className='w-[90%] mx-auto flex justify-between py-5'>
-                <div className='flex gap-3 items-center'>
-                    <figure>
-                        <img
-                            className='h-12 w-12 rounded-full border-1 border-blue-500 p-[1px]'
-                            src={"https://lh3.googleusercontent.com/a/ACg8ocIQcz7BIdgKQjOS3sOCwV-C_6n5gPQg0jK4f7sR37nxFAhWkmc=s96-c"}
-                            alt="Profile Image" />
-                    </figure>
-                    <p className='text-2xl font-semibold'>{user?.displayName}</p>
-                </div>
-                <div>
-                    <div className="flex gap-2">
+            {/* Header Section */}
+            <div className='w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-5'>
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between sm:items-center">
+                    <button
+                        className="button bg-transparent !text-black border border-black flex items-center justify-center gap-2 text-sm sm:text-base py-2 px-3 sm:px-4 order-2 sm:order-1"
+                        onClick={async () => {
+                            const unsyncedTasks = await getUserUnsyncedTasks(user.uid);
+                            await handleSyncWithGoogle(unsyncedTasks)
+                        }}
+                    >
+                        <FcCalendar className="text-lg sm:text-xl" />
+                        <span className="hidden xs:inline">Sync With Google</span>
+                        <span className="xs:hidden">Sync</span>
+                    </button>
 
-                        <button className="button bg-blue-500" onClick={handleSyncWithGoogle}>Sync With Google</button>
-                        <button className='button bg-blue-500 flex items-center gap-3' onClick={
-                            () => {
-                                setTaskForm({
-                                    initialState: { title: "", description: "", status: "pending" },
-                                    type: 'add',
-                                    onSubmit: handleAddTask,
-                                    show: true,
-                                })
-                            }
-                        }>Add Task <Plus /></button>
-                    </div>
+                    <button
+                        className='button bg-blue-500 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base py-2 px-3 sm:px-4 order-1 sm:order-2'
+                        onClick={() => {
+                            setTaskForm({
+                                initialState: { title: "", description: "", status: "pending", summary: "", startDateTime: "", endDateTime: "" },
+                                type: 'add',
+                                onSubmit: handleAddTask,
+                                show: true,
+                            })
+                        }}
+                    >
+                        Add Task <Plus size={16} className="sm:w-5 sm:h-5" />
+                    </button>
                 </div>
             </div>
 
-            <div className='w-[90%] mx-auto grid grid-cols-3 gap-5 px-3'>
-                {
-                    userTasks?.map(({ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar }, index) => {
-                        return <div key={id} className='p-3 rounded-md border border-gray-400 shadow-sm relative'>
-                            <p className='text-sm'><span className='font-semibold'>Title: </span>{title}</p>
-                            <p className='text-sm'><span className='font-semibold'>Description: </span>{description}</p>
-                            <p className='text-sm'><span className='font-semibold'>Status: </span>{status}</p>
-                            <p className='text-sm'><span className='font-semibold'>Status: </span>{summary}</p>
-                            <p className='text-sm'><span className='font-semibold'>Start Date Time: </span>{startDateTime}</p>
-                            <p className='text-sm'><span className='font-semibold'>End Date Time: </span>{endDateTime}</p>
-                            <p className='text-sm'><span className='font-semibold'>linkedWithGoogleCalendar:  </span>{linkedWithGoogleCalendar ? "true" : "false"}</p>
+            {/* Tasks Grid */}
+            <div className='w-full px-4 sm:px-6 lg:px-8 pb-6'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5'>
+                    {userTasks?.map(({ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId }, index) => {
+                        return (
+                            <div key={id} className='p-3 sm:p-4 rounded-md border border-gray-400 shadow-sm relative bg-white'>
+                                {/* Task Content */}
+                                <div className="space-y-2 pr-16 sm:pr-20">
+                                    <p className='text-xs sm:text-sm break-words'>
+                                        <span className='font-semibold'>Title: </span>
+                                        <span className="break-all">{title}</span>
+                                    </p>
+                                    <p className='text-xs sm:text-sm'>
+                                        <span className='font-semibold'>Status: </span>
+                                        <span className={`inline-block px-2 py-1 rounded-full text-xs ${status === 'completed' ? 'bg-green-100 text-green-800' :
+                                            status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-gray-100 text-gray-800'
+                                            }`}>
+                                            {status}
+                                        </span>
+                                    </p>
+                                    {summary && (
+                                        <p className='text-xs sm:text-sm break-words'>
+                                            <span className='font-semibold'>Summary: </span>
+                                            <span className="break-all">{summary}</span>
+                                        </p>
+                                    )}
+                                    <p className='text-xs sm:text-sm break-words'>
+                                        <span className='font-semibold'>Description: </span>
+                                        <span className="break-all">{description}</span>
+                                    </p>
+                                    {startDateTime && (
+                                        <p className='text-xs sm:text-sm'>
+                                            <span className='font-semibold'>Start: </span>
+                                            <span className="break-all">{new Date(startDateTime).toLocaleString()}</span>
+                                        </p>
+                                    )}
+                                    {endDateTime && (
+                                        <p className='text-xs sm:text-sm'>
+                                            <span className='font-semibold'>End: </span>
+                                            <span className="break-all">{new Date(endDateTime).toLocaleString()}</span>
+                                        </p>
+                                    )}
+                                    <div className='text-xs sm:text-sm flex items-center gap-2 flex-wrap'>
+                                        <span className='font-semibold'>Calendar: </span>
+                                        <span className={`inline-block px-2 py-1 rounded-full text-xs ${linkedWithGoogleCalendar ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                            }`}>
+                                            {linkedWithGoogleCalendar ? "Linked" : "Not Linked"}
+                                        </span>
+                                        {!linkedWithGoogleCalendar && (
+                                            <span
+                                                onClick={() => {
+                                                    handleSyncWithGoogle([{ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId }])
+                                                }}
+                                                className='cursor-pointer hover:scale-110 transition-transform'
+                                            >
+                                                <FcCalendar className='text-lg sm:text-xl' />
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
 
-                            <div className='absolute top-3 right-3 flex gap-2'>
-                                <span className='cursor-pointer hover:text-blue-500' onClick={() => {
-                                    setTaskForm({
-                                        type: "edit",
-                                        initialState: {
-                                            title, status, description, id
-                                        },
-                                        onSubmit: handleEditTask,
-                                        show: true,
-
-                                    })
-                                }}><SquarePen size={18} /></span>
-                                <span className='cursor-pointer hover:text-red-500'
-                                    onClick={() => handleDeleteTask(id)}
-                                ><Trash2 size={18} /></span>
+                                {/* Action Buttons */}
+                                <div className='absolute top-2 sm:top-3 right-2 sm:right-3 flex gap-1 sm:gap-2'>
+                                    <span
+                                        className='cursor-pointer hover:text-blue-500 p-1 hover:bg-blue-50 rounded transition-colors'
+                                        onClick={() => {
+                                            setTaskForm({
+                                                type: "edit",
+                                                initialState: {
+                                                    title, status, description, id, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, summary
+                                                },
+                                                onSubmit: handleEditTask,
+                                                show: true,
+                                            })
+                                        }}
+                                    >
+                                        <SquarePen size={16} className="sm:w-5 sm:h-5" />
+                                    </span>
+                                    <span
+                                        className='cursor-pointer hover:text-red-500 p-1 hover:bg-red-50 rounded transition-colors'
+                                        onClick={() => handleDeleteTask(id, linkedWithGoogleCalendar, googleEventId)}
+                                    >
+                                        <Trash2 size={16} className="sm:w-5 sm:h-5" />
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                    })
-                }
+                        )
+                    })}
+                </div>
+
+                {/* Empty State */}
+                {userTasks?.length === 0 && (
+                    <div className="text-center py-12">
+                        <p className="text-gray-500 text-lg">No tasks found</p>
+                        <p className="text-gray-400 text-sm mt-2">Create your first task to get started</p>
+                    </div>
+                )}
             </div>
 
-            {
-                taskForm.show && <TaskForm initialState={taskForm.initialState} type={taskForm.type}
+            {/* Task Form Modal */}
+            {taskForm.show && (
+                <TaskForm
+                    initialState={taskForm.initialState}
+                    type={taskForm.type}
                     onSubmit={taskForm.onSubmit}
-                    onCloseClick={
-                        () => {
-                            setTaskForm({ ...taskForm, show: false });
-                        }
-                    } />
-            }
+                    onCloseClick={() => {
+                        setTaskForm({ ...taskForm, show: false });
+                    }}
+                />
+            )}
         </>
     )
 }

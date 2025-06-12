@@ -21,11 +21,11 @@ const AuthForm = ({ onSubmit, title }) => {
     return (
         <>
             <>
-                <div className='top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] border rounded-lg shadow-md absolute p-8'>
+                <div className='top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] border rounded-lg shadow-md absolute p-8 w-[90%] sm:w-[390px]'>
                     {/* <h1 className='text-4xl font-semibold text-center'><span className='text-blue-600'>Task</span> Manager</h1> */}
 
 
-                    <form className='w-[300px] flex flex-col gap-4'
+                    <form className='w-full flex flex-col gap-4'
                         onSubmit={
                             (e) => {
                                 e.preventDefault();
@@ -53,7 +53,7 @@ const AuthForm = ({ onSubmit, title }) => {
                             <span className="border-t border-gray-400 w-full h-0 mt-1"></span>
                         </div>
                     </form>
-                    <div className='w-[300px] mt-3'>
+                    <div className='w-full mt-3'>
 
                         <button
                             className='w-full px-4 py-1 border border-gray-500 text-gray-900 rounded-md flex items-center gap-2 justify-center cursor-pointer text-sm'

@@ -2,15 +2,9 @@ import { db } from "./config";
 import { collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
 export const createTask = async (task, userId) => {
-    console.log('task: ', task);
-
-    const startDate = new Date(task.startDateTime);
-    const endDate = new Date(task.endDateTime);
 
     await addDoc(collection(db, "tasks"), {
         ...task,
-        startDateTime: startDate.toISOString(),
-        endDateTime: endDate.toISOString(),
         linkedWithGoogleCalendar: false,
         userId
     });
@@ -25,9 +19,9 @@ export const getUserTask = async (userId) => {
 
 export const updateTask = async (updatedData) => {
     const taskRef = doc(db, "tasks", updatedData.id);
-    const { title, description, status, summary, linkedWithGoogleCalendar, startDateTime, endDateTime } = updatedData;
+    const { title, description, status, summary, linkedWithGoogleCalendar, startDateTime, endDateTime, googleEventId } = updatedData;
     await updateDoc(taskRef, {
-        title, description, status, summary, linkedWithGoogleCalendar, startDateTime, endDateTime
+        title, description, status, summary, linkedWithGoogleCalendar, startDateTime, endDateTime, googleEventId
     })
 }
 
