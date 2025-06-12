@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { FcCalendar } from "react-icons/fc";
 import { useAuth } from '../context/AuthContext'
-import { Plus, SquarePen, Trash2 } from 'lucide-react';
+import { Plus, SquarePen, Trash2, CalendarDays, CalendarCheck } from 'lucide-react';
 import TaskForm from '../components/TaskForm';
-import { createTask, deleteTask, getUserTask, updateTask, getUserUnsyncedTasks } from '../firebase/firestore';
+import { createTask, deleteTask, getUserTask, updateTask, getUserUnsyncedTasks, } from '../firebase/firestore';
 import { toast } from 'react-toastify';
 
 const UserDashboard = () => {
@@ -15,6 +15,7 @@ const UserDashboard = () => {
         show: false,
     })
     const [userTasks, setUserTasks] = useState([]);
+    const [unsyncedTasks, setUnsyncedTasks] = useState([]);
 
     const getUserTaskList = async () => {
         const taskList = await getUserTask(user.uid);
@@ -27,7 +28,18 @@ const UserDashboard = () => {
     const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
     const API_KEY = import.meta.env.VITE_API_KEY;
 
+    const getUnsyncTask = async () => {
+        const result = await getUserUnsyncedTasks(user.uid);
+        console.log('result: ', result);
+        setUnsyncedTasks(result)
+    }
     const handleSyncWithGoogle = async (unsyncedTasks) => {
+
+        if (unsyncedTasks.length === 0) {
+            toast.info("All tasks are already synced!");
+            return;
+        }
+
         const gapi = window.gapi;
 
         await new Promise((resolve) => gapi.load('client', resolve));
@@ -44,10 +56,7 @@ const UserDashboard = () => {
                 gapi.client.setToken(tokenResponse);
 
                 try {
-                    if (unsyncedTasks.length === 0) {
-                        toast.info("All tasks are already synced!");
-                        return;
-                    }
+
 
                     const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -86,7 +95,8 @@ const UserDashboard = () => {
                     }
 
                     toast.success("Tasks synced with Google Calendar!");
-                    getUserTaskList(); // Refresh tasks in UI
+                    await getUserTaskList(); // Refresh tasks in UI
+                    await getUnsyncTask();
 
                 } catch (err) {
                     console.error("Error syncing with Google:", err);
@@ -97,12 +107,11 @@ const UserDashboard = () => {
 
         tokenClient.requestAccessToken();
     };
-
     const handleAddTask = async (taskData) => {
         try {
             await createTask(taskData, user.uid);
             getUserTaskList();
-
+            getUnsyncTask();
             toast.success("Task Added Successfully");
             setTaskForm({ ...taskForm, show: false });
         } catch (error) {
@@ -117,7 +126,6 @@ const UserDashboard = () => {
         }
 
         const gapi = window.gapi;
-        alert("Update Called")
 
         const updatedEvent = {
             title: task.title,
@@ -195,21 +203,26 @@ const UserDashboard = () => {
 
     useEffect(() => {
         getUserTaskList();
+
+
+        getUnsyncTask()
     }, []);
 
     return (
         <>
             {/* Header Section */}
-            <div className='w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-5'>
+            <div className='hidden sm:block w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-5'>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between sm:items-center">
                     <button
-                        className="button bg-transparent !text-black border border-black flex items-center justify-center gap-2 text-sm sm:text-base py-2 px-3 sm:px-4 order-2 sm:order-1"
+                        className="button bg-black  border border-black flex items-center justify-center gap-2 text-sm sm:text-base py-2 px-3 sm:px-4 order-2 sm:order-1"
                         onClick={async () => {
-                            const unsyncedTasks = await getUserUnsyncedTasks(user.uid);
                             await handleSyncWithGoogle(unsyncedTasks)
                         }}
                     >
-                        <FcCalendar className="text-lg sm:text-xl" />
+                        {unsyncedTasks.length > 0 ?
+                            <CalendarDays size={20} /> :
+                            <CalendarCheck size={20} />
+                        }
                         <span className="hidden xs:inline">Sync With Google</span>
                         <span className="xs:hidden">Sync</span>
                     </button>
@@ -231,7 +244,7 @@ const UserDashboard = () => {
             </div>
 
             {/* Tasks Grid */}
-            <div className='w-full px-4 sm:px-6 lg:px-8 pb-6'>
+            <div className='w-full px-4 sm:px-6 lg:px-8 pb-6 mt-5 sm:mt-0'>
                 <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5'>
                     {userTasks?.map(({ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId }, index) => {
                         return (
@@ -281,8 +294,8 @@ const UserDashboard = () => {
                                         </span>
                                         {!linkedWithGoogleCalendar && (
                                             <span
-                                                onClick={() => {
-                                                    handleSyncWithGoogle([{ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId }])
+                                                onClick={async () => {
+                                                    await handleSyncWithGoogle([{ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId }])
                                                 }}
                                                 className='cursor-pointer hover:scale-110 transition-transform'
                                             >
@@ -341,6 +354,36 @@ const UserDashboard = () => {
                     }}
                 />
             )}
+
+
+            {/* Fab Buttons */}
+            <div className='flex flex-col gap-2 absolute bottom-5 right-5 block sm:hidden'>
+                <button
+                    className=" p-3 syncBtn text-white rounded-full border-blue-800"
+                    onClick={async () => {
+                        await handleSyncWithGoogle(unsyncedTasks)
+                    }}
+                >
+                    {unsyncedTasks.length > 0 ?
+                        <CalendarDays size={20} /> :
+                        <CalendarCheck size={20} />
+                    }
+                </button>
+
+                <button
+                    className='bg-blue-500 rounded-full p-3 text-white text-xl'
+                    onClick={() => {
+                        setTaskForm({
+                            initialState: { title: "", description: "", status: "pending", summary: "", startDateTime: "", endDateTime: "" },
+                            type: 'add',
+                            onSubmit: handleAddTask,
+                            show: true,
+                        })
+                    }}
+                >
+                    <Plus size={20} className="sm:w-5 sm:h-5" />
+                </button>
+            </div>
         </>
     )
 }
