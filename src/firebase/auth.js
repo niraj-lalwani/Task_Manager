@@ -71,7 +71,7 @@ export const loginWithEmailAndPassword = async (email, password) => {
 export const loginWithGoogle = async () => {
     try {
         const googleAuthProvider = new GoogleAuthProvider();
-        googleAuthProvider.addScope('https://www.googleapis.com/auth/calendar');
+        // googleAuthProvider.addScope('https://www.googleapis.com/auth/calendar');
 
 
         const result = await signInWithPopup(auth, googleAuthProvider)
