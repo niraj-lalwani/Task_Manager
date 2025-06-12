@@ -173,6 +173,14 @@ const UserDashboard = () => {
         const gapi = window.gapi;
 
         try {
+
+            await new Promise((resolve) => gapi.load('client', resolve)); // ✅ ensure client is loaded
+
+            await gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: DISCOVERY_DOCS,
+            });
+
             await gapi.client.calendar.events.delete({
                 calendarId: 'primary',
                 eventId: googleEventId,
