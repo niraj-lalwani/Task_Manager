@@ -1,231 +1,265 @@
-import React, { useEffect, useState } from 'react'
+
+import React, { useEffect, useState, useRef } from 'react';
 import { FcCalendar } from "react-icons/fc";
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/AuthContext';
 import { Plus, SquarePen, Trash2, CalendarDays, CalendarCheck } from 'lucide-react';
-import TaskForm from '../components/TaskForm';
-import { createTask, deleteTask, getUserTask, updateTask, getUserUnsyncedTasks, } from '../firebase/firestore';
 import { toast } from 'react-toastify';
+import Joyride from 'react-joyride';
+
+import TaskForm from '../components/TaskForm';
+import {
+    createTask,
+    deleteTask,
+    getUserTask,
+    getUserUnsyncedTasks,
+    updateTask,
+} from '../firebase/firestore';
+
+const DISCOVERY_DOCS = [
+    "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
+    "https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest"
+];
+const SCOPES = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/tasks";
+const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 const UserDashboard = () => {
-    const { user, } = useAuth();
+    const { user } = useAuth();
 
-    const [taskForm, setTaskForm] = useState({
-        type: "",
-        initialState: {},
-        show: false,
-    })
+    const [taskForm, setTaskForm] = useState({ type: '', initialState: {}, show: false });
     const [userTasks, setUserTasks] = useState([]);
     const [unsyncedTasks, setUnsyncedTasks] = useState([]);
+    const [runJoyride, setRunJoyride] = useState(false);
+
+    const gapiClientLoaded = useRef(false);
+    const tokenClient = useRef(null);
+
+    // ------------------ GOOGLE AUTH UTILS ------------------
+
+    const loadGoogleAPIClient = async () => {
+        if (gapiClientLoaded.current) return;
+
+        await new Promise(resolve => window.gapi.load('client', resolve));
+        await window.gapi.client.init({
+            apiKey: API_KEY,
+            discoveryDocs: DISCOVERY_DOCS
+        });
+
+        tokenClient.current = window.google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: (tokenResponse) => {
+                window.gapi.client.setToken(tokenResponse);
+            }
+        });
+
+        gapiClientLoaded.current = true;
+    };
+
+    const getGoogleAccessToken = async () => {
+        await loadGoogleAPIClient();
+
+        return new Promise((resolve, reject) => {
+            tokenClient.current.callback = (tokenResponse) => {
+                if (tokenResponse.error) {
+                    toast.error("Google auth failed");
+                    reject(tokenResponse);
+                } else {
+                    window.gapi.client.setToken(tokenResponse);
+                    resolve(true);
+                }
+            };
+            tokenClient.current.requestAccessToken();
+        });
+    };
+
+    // ------------------ FIRESTORE TASKS ------------------
 
     const getUserTaskList = async () => {
         const taskList = await getUserTask(user.uid);
         setUserTasks(taskList);
-    }
-
-    var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"]
-    const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
-
-    const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
-    const API_KEY = import.meta.env.VITE_API_KEY;
+    };
 
     const getUnsyncTask = async () => {
         const result = await getUserUnsyncedTasks(user.uid);
-        console.log('result: ', result);
-        setUnsyncedTasks(result)
-    }
-    const handleSyncWithGoogle = async (unsyncedTasks) => {
+        setUnsyncedTasks(result);
+    };
 
-        if (unsyncedTasks.length === 0) {
+    // ------------------ CRUD TASKS ------------------
+
+    const handleAddTask = async (taskData) => {
+        try {
+            await createTask(taskData, user.uid);
+            toast.success("Task Added Successfully");
+            await getUserTaskList();
+            await getUnsyncTask();
+            setTaskForm(prev => ({ ...prev, show: false }));
+        } catch (error) {
+            toast.error("Failed to add task.");
+        }
+    };
+
+    const handleEditTask = async (updatedTask) => {
+        try {
+            await updateTask(updatedTask);
+
+            if (updatedTask.linkedWithGoogleCalendar) {
+                await getGoogleAccessToken();
+
+                if (updatedTask.googleEventId) await updateGoogleCalendarEvent(updatedTask);
+                if (updatedTask.googleTaskId) await updateGoogleTask(updatedTask);
+            }
+
+            toast.success("Task Updated Successfully");
+            await getUserTaskList();
+            setTaskForm(prev => ({ ...prev, show: false }));
+        } catch (error) {
+            toast.error("Failed to update task.");
+        }
+    };
+
+    const handleDeleteTask = async (taskId, linked, googleEventId, googleTaskId) => {
+        try {
+            await deleteTask(taskId);
+
+            if (linked) {
+                await getGoogleAccessToken();
+                if (googleEventId) await deleteGoogleCalendarEvent(googleEventId);
+                if (googleTaskId) await deleteGoogleTask(googleTaskId);
+            }
+
+            toast.success("Task Deleted Successfully");
+            await getUserTaskList();
+            await getUnsyncTask();
+        } catch (error) {
+            toast.error("Failed to delete task.");
+        }
+    };
+
+    // ------------------ SYNC TO GOOGLE ------------------
+
+    const handleSyncWithGoogle = async (tasksToSync) => {
+        if (!tasksToSync.length) {
             toast.info("All tasks are already synced!");
             return;
         }
 
-        const gapi = window.gapi;
-
-        await new Promise((resolve) => gapi.load('client', resolve));
-
-        await gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: DISCOVERY_DOCS,
-        });
-
-        const tokenClient = window.google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: SCOPES,
-            callback: async (tokenResponse) => {
-                gapi.client.setToken(tokenResponse);
-
-                try {
-
-
-                    const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-                    for (const task of unsyncedTasks) {
-                        const event = {
-                            title: task.title || 'Untitled Task',
-                            summary: task.summary || 'Untitled Task',
-                            description: task.description || '',
-                            start: {
-                                dateTime: new Date(task.startDateTime).toISOString(),
-                                timeZone: localTimeZone,
-                            },
-                            end: {
-                                dateTime: new Date(task.endDateTime).toISOString(),
-                                timeZone: localTimeZone,
-                            },
-                        };
-
-                        console.log('event: ', event);
-                        try {
-                            const request = await gapi.client.calendar.events.insert({
-                                calendarId: 'primary',
-                                resource: event,
-                            });
-                            const googleEventId = request.result.id;
-
-                            await updateTask({
-                                ...task,
-                                googleEventId,
-                                linkedWithGoogleCalendar: true,
-                            });
-
-                        } catch (eventErr) {
-                            console.error("Failed to sync task:", task.title, eventErr);
-                        }
-                    }
-
-                    toast.success("Tasks synced with Google Calendar!");
-                    await getUserTaskList(); // Refresh tasks in UI
-                    await getUnsyncTask();
-
-                } catch (err) {
-                    console.error("Error syncing with Google:", err);
-                    toast.error("Failed to sync tasks with Google Calendar.");
-                }
-            },
-        });
-
-        tokenClient.requestAccessToken();
-    };
-    const handleAddTask = async (taskData) => {
         try {
-            await createTask(taskData, user.uid);
-            getUserTaskList();
-            getUnsyncTask();
-            toast.success("Task Added Successfully");
-            setTaskForm({ ...taskForm, show: false });
-        } catch (error) {
-            toast.error("Task Not Added. Something went Wrong...");
-            console.log("Error", error)
+            await getGoogleAccessToken();
+            const gapi = window.gapi;
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            for (const task of tasksToSync) {
+                if (task.linkedWithGoogleCalendar) continue;
+
+                const calendarEvent = {
+                    summary: task.summary || task.title,
+                    description: task.description,
+                    start: { dateTime: new Date(task.startDateTime).toISOString(), timeZone },
+                    end: { dateTime: new Date(task.endDateTime).toISOString(), timeZone },
+                };
+
+                const taskResource = {
+                    title: task.title,
+                    notes: task.description,
+                    due: new Date(task.startDateTime).toISOString(),
+                };
+
+                const calendarRes = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: calendarEvent });
+                const tasksRes = await gapi.client.tasks.tasks.insert({ tasklist: "@default", resource: taskResource });
+
+                await updateTask({
+                    ...task,
+                    linkedWithGoogleCalendar: true,
+                    googleEventId: calendarRes.result.id,
+                    googleTaskId: tasksRes.result.id,
+                });
+            }
+
+            toast.success("Tasks synced with Google!");
+            await getUserTaskList();
+            await getUnsyncTask();
+        } catch (err) {
+            console.error("Google sync failed", err);
+            toast.error("Google sync failed.");
         }
-    }
+    };
+
+    // ------------------ GOOGLE CALENDAR UTILS ------------------
 
     const updateGoogleCalendarEvent = async (task) => {
-        if (!task.linkedWithGoogleCalendar) {
-            return false;
-        }
-
         const gapi = window.gapi;
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        const updatedEvent = {
-            title: task.title,
-            summary: task.summary,
-            description: task.description,
-            start: {
-                dateTime: new Date(task.startDateTime).toISOString(),
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            },
-            end: {
-                dateTime: new Date(task.endDateTime).toISOString(),
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            },
-        };
-
-        try {
-            const response = await gapi.client.calendar.events.update({
-                calendarId: 'primary',
-                eventId: task.googleEventId,
-                resource: updatedEvent,
-            });
-
-            console.log('Event updated:', response.result);
-            toast.success('Google Calendar event updated!');
-        } catch (error) {
-            console.error('Failed to update event:', error);
-            toast.error('Failed to update event in Google Calendar.');
-        }
-    };
-
-    const handleEditTask = async (updatedTaskData) => {
-        try {
-            await updateTask(updatedTaskData);
-            await updateGoogleCalendarEvent(updatedTaskData)
-            getUserTaskList();
-            toast.success("Task Updated Successfully");
-            setTaskForm({ ...taskForm, show: false });
-        } catch (error) {
-            toast.error("Task Not Updated. Something went Wrong...");
-            console.log("Error", error)
-        }
-    }
-
-    const deleteGoogleCalendarEvent = async (googleEventId) => {
-        const gapi = window.gapi;
-
-        try {
-
-            await new Promise((resolve) => gapi.load('client', resolve)); // ✅ ensure client is loaded
-
-            await gapi.client.init({
-                apiKey: API_KEY,
-                discoveryDocs: DISCOVERY_DOCS,
-            });
-
-            await gapi.client.calendar.events.delete({
-                calendarId: 'primary',
-                eventId: googleEventId,
-            });
-
-            console.log('Event deleted');
-            toast.success('Google Calendar event deleted!');
-        } catch (error) {
-            console.error('Failed to delete event:', error);
-            toast.error('Failed to delete Google Calendar event.');
-        }
-    };
-
-    const handleDeleteTask = async (taskId, linkedWithGoogleCalendar, googleEventId) => {
-        try {
-            await deleteTask(taskId);
-
-            if (linkedWithGoogleCalendar && googleEventId) {
-                await deleteGoogleCalendarEvent(googleEventId);
+        return await gapi.client.calendar.events.update({
+            calendarId: 'primary',
+            eventId: task.googleEventId,
+            resource: {
+                summary: task.title,
+                description: task.description,
+                start: { dateTime: new Date(task.startDateTime).toISOString(), timeZone },
+                end: { dateTime: new Date(task.endDateTime).toISOString(), timeZone },
             }
-            getUserTaskList();
-            getUnsyncTask();
-            toast.success("Task Deleted Successfully");
-        } catch (error) {
-            toast.error("Task Not Deleted. Something went Wrong...");
-            console.log("Error", error)
-        }
-    }
+        });
+    };
+
+    const updateGoogleTask = async (task) => {
+        const gapi = window.gapi;
+        console.log('task.googleTaskId: ', task.googleTaskId);
+        return await gapi.client.tasks.tasks.patch({
+            tasklist: "@default",
+            task: task.googleTaskId,
+            resource: {
+                title: task.title,
+                notes: task.description,
+                due: new Date(task.startDateTime).toISOString(),
+                status: "needsAction"
+            }
+        });
+        console.log("Finished")
+    };
+
+    const deleteGoogleCalendarEvent = async (eventId) => {
+        return await window.gapi.client.calendar.events.delete({ calendarId: 'primary', eventId });
+    };
+
+    const deleteGoogleTask = async (taskId) => {
+        return await window.gapi.client.tasks.tasks.delete({ tasklist: "@default", task: taskId });
+    };
+
+    // ------------------ LIFECYCLE ------------------
 
     useEffect(() => {
         getUserTaskList();
-
-
-        getUnsyncTask()
+        getUnsyncTask();
+        if (!localStorage.getItem('hasSeenDashboardTour')) setRunJoyride(true);
     }, []);
 
+    const steps = [
+        { target: '.my-first-step', content: 'From here you can create a task.' },
+        { target: '.my-second-step', content: 'This syncs tasks with Google Calendar.' }
+    ];
+
+    const handleJoyrideCallback = (data) => {
+        const { status } = data;
+        if (status === 'finished' || status === 'skipped') {
+            setRunJoyride(false);
+            localStorage.setItem('hasSeenDashboardTour', 'true');
+        }
+    };
+
+    // ------------------ RENDER ------------------
+
     return (
+
         <>
             {/* Header Section */}
             <div className='hidden sm:block w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-5'>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between sm:items-center">
                     <button
-                        className="button bg-black  border border-black flex items-center justify-center gap-2 text-sm sm:text-base py-2 px-3 sm:px-4 order-2 sm:order-1"
+                        className="my-second-step button bg-black border border-black flex items-center justify-center gap-2 text-sm sm:text-base py-2 px-3 sm:px-4 order-2 sm:order-1"
                         onClick={async () => {
-                            await handleSyncWithGoogle(unsyncedTasks)
+                            await handleSyncWithGoogle(unsyncedTasks);
                         }}
                     >
                         {unsyncedTasks.length > 0 ?
@@ -237,14 +271,14 @@ const UserDashboard = () => {
                     </button>
 
                     <button
-                        className='button bg-blue-500 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base py-2 px-3 sm:px-4 order-1 sm:order-2'
+                        className='my-first-step button bg-blue-500 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base py-2 px-3 sm:px-4 order-1 sm:order-2'
                         onClick={() => {
                             setTaskForm({
                                 initialState: { title: "", description: "", status: "pending", summary: "", startDateTime: "", endDateTime: "" },
                                 type: 'add',
                                 onSubmit: handleAddTask,
                                 show: true,
-                            })
+                            });
                         }}
                     >
                         Add Task <Plus size={16} className="sm:w-5 sm:h-5" />
@@ -255,7 +289,7 @@ const UserDashboard = () => {
             {/* Tasks Grid */}
             <div className='w-full px-4 sm:px-6 lg:px-8 pb-6 mt-5 sm:mt-0'>
                 <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5'>
-                    {userTasks?.map(({ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId }, index) => {
+                    {userTasks?.map(({ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, googleTaskId }) => {
                         return (
                             <div key={id} className='p-3 sm:p-4 rounded-md border border-gray-400 shadow-sm relative bg-white'>
                                 {/* Task Content */}
@@ -304,7 +338,9 @@ const UserDashboard = () => {
                                         {!linkedWithGoogleCalendar && (
                                             <span
                                                 onClick={async () => {
-                                                    await handleSyncWithGoogle([{ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId }])
+                                                    alert("Sync With Google")
+                                                    // Sync only this specific task
+                                                    await handleSyncWithGoogle([{ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, googleTaskId }]);
                                                 }}
                                                 className='cursor-pointer hover:scale-110 transition-transform'
                                             >
@@ -322,24 +358,24 @@ const UserDashboard = () => {
                                             setTaskForm({
                                                 type: "edit",
                                                 initialState: {
-                                                    title, status, description, id, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, summary
+                                                    title, status, description, id, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, summary, googleTaskId
                                                 },
                                                 onSubmit: handleEditTask,
                                                 show: true,
-                                            })
+                                            });
                                         }}
                                     >
                                         <SquarePen size={16} className="sm:w-5 sm:h-5" />
                                     </span>
                                     <span
                                         className='cursor-pointer hover:text-red-500 p-1 hover:bg-red-50 rounded transition-colors'
-                                        onClick={() => handleDeleteTask(id, linkedWithGoogleCalendar, googleEventId)}
+                                        onClick={() => handleDeleteTask(id, linkedWithGoogleCalendar, googleEventId, googleTaskId)}
                                     >
                                         <Trash2 size={16} className="sm:w-5 sm:h-5" />
                                     </span>
                                 </div>
                             </div>
-                        )
+                        );
                     })}
                 </div>
 
@@ -364,13 +400,14 @@ const UserDashboard = () => {
                 />
             )}
 
-
-            {/* Fab Buttons */}
-            <div className='flex flex-col gap-2 absolute bottom-5 right-5  sm:hidden'>
+            {/* Fab Buttons (visible only on small screens for mobile) */}
+            {/* Note: The class `sm:hidden` means it will be hidden on screens larger than 'sm' breakpoint.
+                If you want it to be *visible* only on small screens, this is correct. */}
+            <div className='my-third-step flex flex-col gap-2 absolute bottom-5 right-5 sm:hidden'>
                 <button
                     className={`p-3 syncBtn ${unsyncedTasks.length > 0 && "animation"} text-white rounded-full border-blue-800`}
                     onClick={async () => {
-                        await handleSyncWithGoogle(unsyncedTasks)
+                        await handleSyncWithGoogle(unsyncedTasks);
                     }}
                 >
                     {unsyncedTasks.length > 0 ?
@@ -380,21 +417,37 @@ const UserDashboard = () => {
                 </button>
 
                 <button
-                    className='bg-blue-500 rounded-full p-3 text-white text-xl'
+                    className='my-fourth-step bg-blue-500 rounded-full p-3 text-white text-xl'
                     onClick={() => {
                         setTaskForm({
                             initialState: { title: "", description: "", status: "pending", summary: "", startDateTime: "", endDateTime: "" },
                             type: 'add',
                             onSubmit: handleAddTask,
                             show: true,
-                        })
+                        });
                     }}
                 >
                     <Plus size={20} className="sm:w-5 sm:h-5" />
                 </button>
             </div>
-        </>
-    )
-}
 
-export default UserDashboard
+            <Joyride
+                steps={steps}
+                run={runJoyride}
+                continuous
+                scrollToFirstStep
+                showProgress
+                showSkipButton
+                styles={{
+                    options: {
+                        zIndex: 10000,
+                    },
+                }}
+                callback={handleJoyrideCallback}
+            />
+        </>
+
+    );
+};
+
+export default UserDashboard;

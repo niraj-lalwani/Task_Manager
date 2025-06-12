@@ -19,9 +19,9 @@ export const getUserTask = async (userId) => {
 
 export const updateTask = async (updatedData) => {
     const taskRef = doc(db, "tasks", updatedData.id);
-    const { title, description, status, summary, linkedWithGoogleCalendar, startDateTime, endDateTime, googleEventId } = updatedData;
+    const { title, description, status, summary, linkedWithGoogleCalendar, startDateTime, endDateTime, googleEventId, googleTaskId } = updatedData;
     await updateDoc(taskRef, {
-        title, description, status, summary, linkedWithGoogleCalendar, startDateTime, endDateTime, googleEventId
+        title, description, status, summary, linkedWithGoogleCalendar, startDateTime, endDateTime, googleEventId, googleTaskId
     })
 }
 
