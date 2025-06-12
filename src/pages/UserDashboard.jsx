@@ -202,6 +202,7 @@ const UserDashboard = () => {
                 await deleteGoogleCalendarEvent(googleEventId);
             }
             getUserTaskList();
+            getUnsyncTask();
             toast.success("Task Deleted Successfully");
         } catch (error) {
             toast.error("Task Not Deleted. Something went Wrong...");
@@ -365,9 +366,9 @@ const UserDashboard = () => {
 
 
             {/* Fab Buttons */}
-            <div className='flex flex-col gap-2 absolute bottom-5 right-5 block sm:hidden'>
+            <div className='flex flex-col gap-2 absolute bottom-5 right-5  sm:hidden'>
                 <button
-                    className=" p-3 syncBtn text-white rounded-full border-blue-800"
+                    className={`p-3 syncBtn ${unsyncedTasks.length > 0 && "animation"} text-white rounded-full border-blue-800`}
                     onClick={async () => {
                         await handleSyncWithGoogle(unsyncedTasks)
                     }}

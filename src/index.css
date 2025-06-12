@@ -22,12 +22,16 @@
   position: relative;
   background: rgb(30, 144, 255);
   background: linear-gradient(159deg, rgba(30, 144, 255, 1) 0%, rgba(153, 186, 221, 1) 100%);
+}
+
+.animation {
   animation: fancyBorderRadius2 4s linear .5s infinite;
   -webkit-animation: fancyBorderRadius 4s linear .5s infinite;
+
 }
 
 
-.syncBtn::after {
+.animation::after {
   position: absolute;
   content: "";
   height: 85%;
@@ -73,31 +77,5 @@
     -moz-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
     -ms-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
     -o-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-  }
-}
-
-@keyframes fancyBorderRadius2 {
-  0% {
-    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-    -webkit-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-    -moz-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-    -ms-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-    -o-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-  }
-
-  50% {
-    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-    -webkit-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-    -moz-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-    -ms-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-    -o-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-  }
-
-  100% {
-    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-    -webkit-border-radius: 66% 34% 55% 45% / 69% 55% 45% 31%;
-    -moz-border-radius: 66% 34% 55% 45% / 69% 55% 45% 31%;
-    -ms-border-radius: 66% 34% 55% 45% / 69% 55% 45% 31%;
-    -o-border-radius: 66% 34% 55% 45% / 69% 55% 45% 31%;
   }
 }
