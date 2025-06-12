@@ -21,7 +21,7 @@ const AuthForm = ({ onSubmit, title }) => {
     return (
         <>
             <>
-                <div className='top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] border rounded-lg shadow-md absolute p-4 sm:p-6 md:p-8 w-[90%] sm:w-[390px]'>
+                <div className='top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] border rounded-lg shadow-md absolute px-4 py-8 sm:p-6 md:p-8 w-[90%] sm:w-[390px]'>
                     {/* <h1 className='text-4xl font-semibold text-center'><span className='text-blue-600'>Task</span> Manager</h1> */}
 
 
