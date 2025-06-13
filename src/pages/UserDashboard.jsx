@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { FcCalendar } from "react-icons/fc";
 import { useAuth } from '../context/AuthContext';
@@ -29,7 +28,18 @@ const UserDashboard = () => {
     const [taskForm, setTaskForm] = useState({ type: '', initialState: {}, show: false });
     const [userTasks, setUserTasks] = useState([]);
     const [unsyncedTasks, setUnsyncedTasks] = useState([]);
-    const [runJoyride, setRunJoyride] = useState(false);
+    const [runJoyride, setRunJoyride] = useState(true);
+    const steps = [
+        {
+            target: ".my-first-step, .my-fourth-step", // Desktop + Mobile Add Task button
+            content: "Click here to add a new task",
+        },
+        {
+            target: ".my-second-step, .my-third-step", // Desktop + Mobile Sync button
+            content: "Sync your tasks with Google",
+        },
+
+    ];
 
     const gapiClientLoaded = useRef(false);
     const tokenClient = useRef(null);
@@ -55,10 +65,17 @@ const UserDashboard = () => {
 
         gapiClientLoaded.current = true;
     };
-
     const getGoogleAccessToken = async () => {
         await loadGoogleAPIClient();
 
+        const { access_token = "" } = window?.gapi?.client?.getToken() || {};
+
+        // If token exists, resolve immediately
+        if (access_token) {
+            return Promise.resolve(true);
+        }
+
+        // Otherwise, request a new token
         return new Promise((resolve, reject) => {
             tokenClient.current.callback = (tokenResponse) => {
                 if (tokenResponse.error) {
@@ -69,9 +86,11 @@ const UserDashboard = () => {
                     resolve(true);
                 }
             };
+
             tokenClient.current.requestAccessToken();
         });
     };
+
 
     // ------------------ FIRESTORE TASKS ------------------
 
@@ -216,7 +235,6 @@ const UserDashboard = () => {
                 status: "needsAction"
             }
         });
-        console.log("Finished")
     };
 
     const deleteGoogleCalendarEvent = async (eventId) => {
@@ -235,18 +253,13 @@ const UserDashboard = () => {
         if (!localStorage.getItem('hasSeenDashboardTour')) setRunJoyride(true);
     }, []);
 
-    const steps = [
-        { target: '.my-first-step', content: 'From here you can create a task.' },
-        { target: '.my-second-step', content: 'This syncs tasks with Google Calendar.' }
-    ];
 
     const handleJoyrideCallback = (data) => {
         const { status } = data;
-        if (status === 'finished' || status === 'skipped') {
-            setRunJoyride(false);
-            localStorage.setItem('hasSeenDashboardTour', 'true');
+        if (["finished", "skipped"].includes(status)) {
+            setRunJoyride(false); // End of tour
         }
-    };
+    }
 
     // ------------------ RENDER ------------------
 
@@ -400,12 +413,10 @@ const UserDashboard = () => {
                 />
             )}
 
-            {/* Fab Buttons (visible only on small screens for mobile) */}
-            {/* Note: The class `sm:hidden` means it will be hidden on screens larger than 'sm' breakpoint.
-                If you want it to be *visible* only on small screens, this is correct. */}
-            <div className='my-third-step flex flex-col gap-2 absolute bottom-5 right-5 sm:hidden'>
+
+            <div className='my-third-step flex flex-col gap-2 absolute bottom-5 right-5 sm:hidden '>
                 <button
-                    className={`p-3 syncBtn ${unsyncedTasks.length > 0 && "animation"} text-white rounded-full border-blue-800`}
+                    className={`p-3 syncBtn ${unsyncedTasks.length > 0 && "animation"} text-white rounded-full border-blue-800 my-third-step`}
                     onClick={async () => {
                         await handleSyncWithGoogle(unsyncedTasks);
                     }}
@@ -436,8 +447,8 @@ const UserDashboard = () => {
                 run={runJoyride}
                 continuous
                 scrollToFirstStep
-                showProgress
                 showSkipButton
+                showProgress
                 styles={{
                     options: {
                         zIndex: 10000,

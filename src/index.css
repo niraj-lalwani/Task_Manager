@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-
 .input {
   @apply focus:border-blue-500 outline-none border border-gray-400 px-2 py-1 rounded-md
 }
@@ -17,7 +16,6 @@
   @apply px-4 py-[6px] text-[15px] rounded-md text-white cursor-pointer h-auto
 }
 
-
 .syncBtn {
   position: relative;
   background: rgb(30, 144, 255);
@@ -27,9 +25,7 @@
 .animation {
   animation: fancyBorderRadius2 4s linear .5s infinite;
   -webkit-animation: fancyBorderRadius 4s linear .5s infinite;
-
 }
-
 
 .animation::after {
   position: absolute;
@@ -52,7 +48,6 @@
   -o-transform: translate(-50%, -50%);
   -webkit-animation: fancyBorderRadius 4s linear .5s infinite;
 }
-
 
 @keyframes fancyBorderRadius {
   0% {
@@ -78,4 +73,33 @@
     -ms-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
     -o-border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
   }
+}
+
+/* Form Shape Divider - Fixed */
+.custom-shape-divider-top-1749790311 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: rotate(180deg);
+}
+
+.custom-shape-divider-top-1749790311 svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 31.3px);
+  height: 80px;
+  transform: rotateY(180deg);
+}
+
+.custom-shape-divider-top-1749790311 .shape-fill {
+  fill: #2b7fff;
+}
+
+/* Form content wrapper for proper layering */
+.form-content {
+  position: relative;
+  z-index: 2;
 }
