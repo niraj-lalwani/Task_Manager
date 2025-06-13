@@ -23,7 +23,7 @@ const TaskForm = ({ type, initialState, onSubmit, onCloseClick }) => {
                             <X strokeWidth={1.25} size={20} />
                         </span>
 
-                        <div className='pr-8 sm:pr-10 pt-16 mb-0 sm:mb-6'>
+                        <div className='pr-8 sm:pr-10 py-3 sm:py-0 sm:pt-16 mb-0 sm:mb-6'>
                             <p className='text-lg sm:text-xl md:text-2xl font-semibold break-words'>
                                 <span className="text-blue-500">{type === "add" ? "ADD" : "EDIT"}</span> TASK
                             </p>
