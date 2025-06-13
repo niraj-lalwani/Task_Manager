@@ -11,7 +11,7 @@ const TaskForm = ({ type, initialState, onSubmit, onCloseClick }) => {
                 <form className='w-full max-w-[500px] flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 md:p-7 rounded-md   shadow-xl bg-white relative max-h-[90vh] overflow-y-auto'>
 
                     {/* Shape Divider - Fixed */}
-                    <div class="custom-shape-divider-top-1749790311">
+                    <div class="custom-shape-divider-top-1749790311 hidden sm:block">
                         <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
                             <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill"></path>
                         </svg>
@@ -23,7 +23,7 @@ const TaskForm = ({ type, initialState, onSubmit, onCloseClick }) => {
                             <X strokeWidth={1.25} size={20} />
                         </span>
 
-                        <div className='pr-8 sm:pr-10 pt-16 mb-6'>
+                        <div className='pr-8 sm:pr-10 pt-16 mb-0 sm:mb-6'>
                             <p className='text-lg sm:text-xl md:text-2xl font-semibold break-words'>
                                 <span className="text-blue-500">{type === "add" ? "ADD" : "EDIT"}</span> TASK
                             </p>

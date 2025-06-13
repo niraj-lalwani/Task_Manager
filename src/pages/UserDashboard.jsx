@@ -414,33 +414,36 @@ const UserDashboard = () => {
             )}
 
 
-            <div className='my-third-step flex flex-col gap-2 absolute bottom-5 right-5 sm:hidden '>
-                <button
-                    className={`p-3 syncBtn ${unsyncedTasks.length > 0 && "animation"} text-white rounded-full border-blue-800 my-third-step`}
-                    onClick={async () => {
-                        await handleSyncWithGoogle(unsyncedTasks);
-                    }}
-                >
-                    {unsyncedTasks.length > 0 ?
-                        <CalendarDays size={20} /> :
-                        <CalendarCheck size={20} />
-                    }
-                </button>
+            {
+                !taskForm.show &&
+                <div className='my-third-step flex flex-col gap-2 absolute bottom-5 right-5 sm:hidden'>
+                    <button
+                        className={`p-3 syncBtn ${unsyncedTasks.length > 0 && "animation"} text-white rounded-full border-blue-800 my-third-step`}
+                        onClick={async () => {
+                            await handleSyncWithGoogle(unsyncedTasks);
+                        }}
+                    >
+                        {unsyncedTasks.length > 0 ?
+                            <CalendarDays size={20} /> :
+                            <CalendarCheck size={20} />
+                        }
+                    </button>
 
-                <button
-                    className='my-fourth-step bg-blue-500 rounded-full p-3 text-white text-xl'
-                    onClick={() => {
-                        setTaskForm({
-                            initialState: { title: "", description: "", status: "pending", summary: "", startDateTime: "", endDateTime: "" },
-                            type: 'add',
-                            onSubmit: handleAddTask,
-                            show: true,
-                        });
-                    }}
-                >
-                    <Plus size={20} className="sm:w-5 sm:h-5" />
-                </button>
-            </div>
+                    <button
+                        className='my-fourth-step bg-blue-500 rounded-full p-3 text-white text-xl'
+                        onClick={() => {
+                            setTaskForm({
+                                initialState: { title: "", description: "", status: "pending", summary: "", startDateTime: "", endDateTime: "" },
+                                type: 'add',
+                                onSubmit: handleAddTask,
+                                show: true,
+                            });
+                        }}
+                    >
+                        <Plus size={20} className="sm:w-5 sm:h-5" />
+                    </button>
+                </div>
+            }
 
             {/* <Joyride
                 steps={steps}
