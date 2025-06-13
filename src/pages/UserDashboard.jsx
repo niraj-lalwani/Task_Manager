@@ -3,7 +3,7 @@ import { FcCalendar } from "react-icons/fc";
 import { useAuth } from '../context/AuthContext';
 import { Plus, SquarePen, Trash2, CalendarDays, CalendarCheck } from 'lucide-react';
 import { toast } from 'react-toastify';
-import Joyride from 'react-joyride';
+// import Joyride from 'react-joyride';
 
 import TaskForm from '../components/TaskForm';
 import {
@@ -442,7 +442,7 @@ const UserDashboard = () => {
                 </button>
             </div>
 
-            <Joyride
+            {/* <Joyride
                 steps={steps}
                 run={runJoyride}
                 continuous
@@ -455,7 +455,7 @@ const UserDashboard = () => {
                     },
                 }}
                 callback={handleJoyrideCallback}
-            />
+            /> */}
         </>
 
     );
