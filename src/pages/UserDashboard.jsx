@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { FcCalendar } from "react-icons/fc";
 import { useAuth } from '../context/AuthContext';
 import { Plus, SquarePen, Trash2, CalendarDays, CalendarCheck } from 'lucide-react';
 import { toast } from 'react-toastify';
+import Header from '../components/Header'
+
 // import Joyride from 'react-joyride';
 
 import TaskForm from '../components/TaskForm';
@@ -133,6 +136,7 @@ const UserDashboard = () => {
             await getUserTaskList();
             setTaskForm(prev => ({ ...prev, show: false }));
         } catch (error) {
+            console.log('error: ', error);
             toast.error("Failed to update task.");
         }
     };
@@ -267,6 +271,7 @@ const UserDashboard = () => {
 
         <>
             {/* Header Section */}
+            <Header />
             <div className='hidden sm:block w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-5'>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between sm:items-center">
                     <button
@@ -282,6 +287,7 @@ const UserDashboard = () => {
                         <span className="hidden xs:inline">Sync With Google</span>
                         <span className="xs:hidden">Sync</span>
                     </button>
+                    {/* <Link to="/new-look">New Look</Link> */}
 
                     <button
                         className='my-first-step button bg-blue-500 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base py-2 px-3 sm:px-4 order-1 sm:order-2'
