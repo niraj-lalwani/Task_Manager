@@ -12,31 +12,56 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Your App Name',
-        short_name: 'AppName',
-        description: 'Your app description',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
-        display: 'standalone',
-        start_url: '/',
-        icons: [
+        "name": "Task Manager",
+        "short_name": "Tasks",
+        "description": "A simple and efficient task management PWA.",
+        "id": "/",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#ffffff",
+        "theme_color": "#4a90e2",
+        "orientation": "portrait",
+        "icons": [
           {
-            src: '/done.png',
-            sizes: '192x192',
-            type: 'image/png',
+            "src": "/done.png",
+            "type": "image/png",
+            "sizes": "192x192"
           },
           {
-            src: '/done.png',
-            sizes: '512x512',
-            type: 'image/png',
+            "src": "/done.png",
+            "type": "image/png",
+            "sizes": "512x512"
           },
           {
-            src: '/done.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable',
+            "src": "/done.png",
+            "type": "image/png",
+            "sizes": "512x512",
+            "purpose": "maskable"
           },
+          {
+            "src": "/done.png",
+            "type": "image/png",
+            "sizes": "512x512",
+            "purpose": "any"
+          }
         ],
+        "launch_handler": {
+          "client_mode": "auto"
+        },
+        "screenshots": [
+          {
+            "src": "/done.png",
+            "sizes": "540x720",
+            "type": "image/png",
+            "label": "Dashboard"
+          },
+          {
+            "src": "/done.png",
+            "sizes": "540x720",
+            "type": "image/png",
+            "label": "Create Task"
+          }
+        ]
       },
     }),
   ],
