@@ -11,6 +11,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      form_factor: ['wide'],
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
         name: 'Task Manager',
@@ -30,7 +31,7 @@ export default defineConfig({
           },
           {
             src: 'pwa-512x512.png',
-            sizes: '192x192',
+            sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
           }
