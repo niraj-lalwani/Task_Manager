@@ -18,24 +18,24 @@ export default defineConfig({
         theme_color: '#ffffff',
         icons: [
           {
-            src: 'done.png',
+            src: 'pwa-512x512.png',
             sizes: '64x64',
             type: 'image/png'
           },
           {
-            src: 'done.png',
+            src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'done.png',
+            src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'done.png',
-            sizes: '512x512',
+            src: 'pwa-512x512.png',
+            sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable'
           }
