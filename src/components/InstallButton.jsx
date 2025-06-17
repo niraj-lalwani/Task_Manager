@@ -5,7 +5,6 @@ const InstallButton = () => {
     const installPrompt = usePWAInstallPrompt();
     console.log('installPrompt: ', installPrompt);
 
-    alert("Install Button")
 
     const handleInstall = () => {
         if (installPrompt) {
