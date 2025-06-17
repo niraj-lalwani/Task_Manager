@@ -1,0 +1,14 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "app.vercel.task_manager_umber_nu.twa",
+            "sha256_cert_fingerprints": [
+                "A3:1E:70:33:D4:9D:33:8B:07:92:6C:79:56:B1:D7:77:70:F9:AA:9E:90:32:82:BC:44:71:50:7C:A6:49:2E:2D"
+            ]
+        }
+    }
+]
