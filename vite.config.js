@@ -16,23 +16,17 @@ export default defineConfig({
         name: 'Task Manager',
         short_name: 'Vite PWA Project',
         theme_color: '#ffffff',
-        start_url: '/signin',
+        start_url: '/',
         icons: [
           {
             src: 'pwa-512x512.png',
-            sizes: '64x64',
+            sizes: '512x512',
             type: 'image/png'
           },
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
           },
           {
             src: 'pwa-512x512.png',
