@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import Header from './Header';
+import LavenderLoader from './LavenderLoader ';
 
 const CheckAuth = ({ children }) => {
 
@@ -42,7 +43,7 @@ const CheckAuth = ({ children }) => {
 
 
     if (isLoading) {
-        return <><h1>Loading...</h1></>
+        return <LavenderLoader />
     }
 
 

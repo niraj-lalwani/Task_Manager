@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FcCalendar } from "react-icons/fc";
 import { useAuth } from '../context/AuthContext';
-import { Plus, SquarePen, Trash2, CalendarDays, CalendarCheck } from 'lucide-react';
+import { Plus, SquarePen, Trash2, CalendarDays, CalendarCheck, Clock, CheckCircle2, PlayCircle, Sparkles } from 'lucide-react';
 import { toast } from 'react-toastify';
 import Header from '../components/Header'
 
@@ -265,146 +265,249 @@ const UserDashboard = () => {
         }
     }
 
+    // Helper function to get status icon and styling
+    const getStatusDetails = (status) => {
+        switch (status) {
+            case 'completed':
+                return {
+                    icon: <CheckCircle2 size={14} />,
+                    className: 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-emerald-100',
+                    gradient: 'from-emerald-400 to-emerald-500'
+                };
+            case 'in-progress':
+                return {
+                    icon: <PlayCircle size={14} />,
+                    className: 'bg-amber-50 text-amber-700 border-amber-200 shadow-amber-100',
+                    gradient: 'from-amber-400 to-amber-500'
+                };
+            default:
+                return {
+                    icon: <Clock size={14} />,
+                    className: 'bg-purple-50 text-purple-700 border-purple-200 shadow-purple-100',
+                    gradient: 'from-purple-400 to-purple-500'
+                };
+        }
+    };
+
     // ------------------ RENDER ------------------
 
     return (
-
-        <>
-            {/* Header Section */}
-            <Header />
-            <div className='hidden sm:block w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-5'>
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between sm:items-center">
-                    <button
-                        className="my-second-step button bg-black border border-black flex items-center justify-center gap-2 text-sm sm:text-base py-2 px-3 sm:px-4 order-2 sm:order-1"
-                        onClick={async () => {
-                            await handleSyncWithGoogle(unsyncedTasks);
-                        }}
-                    >
-                        {unsyncedTasks.length > 0 ?
-                            <CalendarDays size={20} /> :
-                            <CalendarCheck size={20} />
-                        }
-                        <span className="hidden xs:inline">Sync With Google</span>
-                        <span className="xs:hidden">Sync</span>
-                    </button>
-                    {/* <Link to="/new-look">New Look</Link> */}
-
-                    <button
-                        className='my-first-step button bg-blue-500 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base py-2 px-3 sm:px-4 order-1 sm:order-2'
-                        onClick={() => {
-                            setTaskForm({
-                                initialState: { title: "", description: "", status: "pending", summary: "", startDateTime: "", endDateTime: "" },
-                                type: 'add',
-                                onSubmit: handleAddTask,
-                                show: true,
-                            });
-                        }}
-                    >
-                        Add Task <Plus size={16} className="sm:w-5 sm:h-5" />
-                    </button>
-                </div>
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-lavender-50 to-indigo-50 relative overflow-hidden">
+            {/* Animated Background Elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-32 w-96 h-96 bg-gradient-to-br from-purple-200/30 to-pink-200/20 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-gradient-to-tr from-indigo-200/30 to-purple-200/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-lavender-100/20 to-purple-100/20 rounded-full blur-2xl animate-pulse delay-500"></div>
             </div>
 
-            {/* Tasks Grid */}
-            <div className='w-full px-4 sm:px-6 lg:px-8 pb-6 mt-5 sm:mt-0'>
-                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5'>
-                    {userTasks?.map(({ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, googleTaskId }) => {
-                        return (
-                            <div key={id} className='p-3 sm:p-4 rounded-md border border-gray-400 shadow-sm relative bg-white'>
-                                {/* Task Content */}
-                                <div className="space-y-2 pr-16 sm:pr-20">
-                                    <p className='text-xs sm:text-sm break-words'>
-                                        <span className='font-semibold'>Title: </span>
-                                        <span className="break-all">{title}</span>
-                                    </p>
-                                    <p className='text-xs sm:text-sm'>
-                                        <span className='font-semibold'>Status: </span>
-                                        <span className={`inline-block px-2 py-1 rounded-full text-xs ${status === 'completed' ? 'bg-green-100 text-green-800' :
-                                            status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-gray-100 text-gray-800'
-                                            }`}>
-                                            {status}
-                                        </span>
-                                    </p>
-                                    {summary && (
-                                        <p className='text-xs sm:text-sm break-words'>
-                                            <span className='font-semibold'>Summary: </span>
-                                            <span className="break-all">{summary}</span>
-                                        </p>
-                                    )}
-                                    <p className='text-xs sm:text-sm break-words'>
-                                        <span className='font-semibold'>Description: </span>
-                                        <span className="break-all">{description}</span>
-                                    </p>
-                                    {startDateTime && (
-                                        <p className='text-xs sm:text-sm'>
-                                            <span className='font-semibold'>Start: </span>
-                                            <span className="break-all">{new Date(startDateTime).toLocaleString()}</span>
-                                        </p>
-                                    )}
-                                    {endDateTime && (
-                                        <p className='text-xs sm:text-sm'>
-                                            <span className='font-semibold'>End: </span>
-                                            <span className="break-all">{new Date(endDateTime).toLocaleString()}</span>
-                                        </p>
-                                    )}
-                                    <div className='text-xs sm:text-sm flex items-center gap-2 flex-wrap'>
-                                        <span className='font-semibold'>Calendar: </span>
-                                        <span className={`inline-block px-2 py-1 rounded-full text-xs ${linkedWithGoogleCalendar ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                            }`}>
-                                            {linkedWithGoogleCalendar ? "Linked" : "Not Linked"}
-                                        </span>
-                                        {!linkedWithGoogleCalendar && (
-                                            <span
-                                                onClick={async () => {
-                                                    alert("Sync With Google")
-                                                    // Sync only this specific task
-                                                    await handleSyncWithGoogle([{ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, googleTaskId }]);
-                                                }}
-                                                className='cursor-pointer hover:scale-110 transition-transform'
-                                            >
-                                                <FcCalendar className='text-lg sm:text-xl' />
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
+            {/* Header Section */}
+            <Header />
 
-                                {/* Action Buttons */}
-                                <div className='absolute top-2 sm:top-3 right-2 sm:right-3 flex gap-1 sm:gap-2'>
-                                    <span
-                                        className='cursor-pointer hover:text-blue-500 p-1 hover:bg-blue-50 rounded transition-colors'
-                                        onClick={() => {
-                                            setTaskForm({
-                                                type: "edit",
-                                                initialState: {
-                                                    title, status, description, id, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, summary, googleTaskId
-                                                },
-                                                onSubmit: handleEditTask,
-                                                show: true,
-                                            });
-                                        }}
-                                    >
-                                        <SquarePen size={16} className="sm:w-5 sm:h-5" />
-                                    </span>
-                                    <span
-                                        className='cursor-pointer hover:text-red-500 p-1 hover:bg-red-50 rounded transition-colors'
-                                        onClick={() => handleDeleteTask(id, linkedWithGoogleCalendar, googleEventId, googleTaskId)}
-                                    >
-                                        <Trash2 size={16} className="sm:w-5 sm:h-5" />
-                                    </span>
+            {/* Main Content */}
+            <div className="relative z-10">
+                {/* Desktop Action Bar */}
+                <div className='hidden sm:block w-full px-4 sm:px-6 lg:px-8 py-6'>
+                    <div className="bg-white/70 backdrop-blur-md rounded-2xl border border-purple-200/50 shadow-lg shadow-purple-100/20 p-6">
+                        <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center">
+                            {/* Stats Section */}
+                            <div className="flex items-center gap-6">
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                                        {userTasks.length}
+                                    </div>
+                                    <div className="text-sm text-purple-600 font-medium">Total Tasks</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent">
+                                        {userTasks.filter(task => task.status === 'completed').length}
+                                    </div>
+                                    <div className="text-sm text-emerald-600 font-medium">Completed</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-amber-800 bg-clip-text text-transparent">
+                                        {unsyncedTasks.length}
+                                    </div>
+                                    <div className="text-sm text-amber-600 font-medium">Unsynced</div>
                                 </div>
                             </div>
-                        );
-                    })}
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3">
+                                <button
+                                    className="cursor-pointer my-second-step group relative bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white flex items-center gap-3 px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] font-medium border border-purple-500/20"
+                                    onClick={async () => {
+                                        await handleSyncWithGoogle(unsyncedTasks);
+                                    }}
+                                >
+                                    <div className="relative">
+                                        {unsyncedTasks.length > 0 ?
+                                            <CalendarDays size={20} className="animate-pulse" /> :
+                                            <CalendarCheck size={20} />
+                                        }
+                                        {unsyncedTasks.length > 0 && (
+                                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+                                        )}
+                                    </div>
+                                    <span>Sync With Google</span>
+                                    <Sparkles size={16} className="opacity-70 group-hover:opacity-100 transition-opacity" />
+                                </button>
+
+                                <button
+                                    className='cursor-pointer my-first-step group bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white flex items-center gap-3 px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] font-medium'
+                                    onClick={() => {
+                                        setTaskForm({
+                                            initialState: { title: "", description: "", status: "pending", summary: "", startDateTime: "", endDateTime: "" },
+                                            type: 'add',
+                                            onSubmit: handleAddTask,
+                                            show: true,
+                                        });
+                                    }}
+                                >
+                                    <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                                    <span>Add New Task</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Empty State */}
-                {userTasks?.length === 0 && (
-                    <div className="text-center py-12">
-                        <p className="text-gray-500 text-lg">No tasks found</p>
-                        <p className="text-gray-400 text-sm mt-2">Create your first task to get started</p>
+                {/* Tasks Grid */}
+                <div className='w-full px-4 sm:px-6 lg:px-8 pb-6 mt-5 sm:mt-0'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+                        {userTasks?.map(({ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, googleTaskId }) => {
+                            const statusDetails = getStatusDetails(status);
+                            return (
+                                <div key={id} className='group relative bg-white/80 backdrop-blur-md rounded-2xl border border-purple-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 overflow-hidden'>
+                                    {/* Status Indicator Bar */}
+                                    <div className={`h-1 w-full bg-gradient-to-r ${statusDetails.gradient}`}></div>
+
+                                    {/* Card Content */}
+                                    <div className="p-5">
+                                        {/* Title and Actions Row */}
+                                        <div className="flex justify-between items-start mb-4">
+                                            <h3 className="font-bold text-lg text-purple-900 truncate pr-2 group-hover:text-purple-700 transition-colors">
+                                                {title}
+                                            </h3>
+                                            <div className='flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300'>
+                                                <button
+                                                    className='p-2 hover:bg-purple-100 rounded-lg transition-all duration-200 hover:scale-110 text-purple-600 cursor-pointer'
+                                                    onClick={() => {
+                                                        setTaskForm({
+                                                            type: "edit",
+                                                            initialState: {
+                                                                title, status, description, id, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, summary, googleTaskId
+                                                            },
+                                                            onSubmit: handleEditTask,
+                                                            show: true,
+                                                        });
+                                                    }}
+                                                >
+                                                    <SquarePen size={16} />
+                                                </button>
+                                                <button
+                                                    className='p-2 hover:bg-red-100 rounded-lg transition-all duration-200 hover:scale-110 text-red-500 cursor-pointer'
+                                                    onClick={() => handleDeleteTask(id, linkedWithGoogleCalendar, googleEventId, googleTaskId)}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Status Badge */}
+                                        <div className="mb-4">
+                                            <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border ${statusDetails.className} shadow-sm`}>
+                                                {statusDetails.icon}
+                                                {status}
+                                            </span>
+                                        </div>
+
+                                        {/* Description */}
+                                        <div className="space-y-3 text-sm">
+                                            {summary && (
+                                                <div>
+                                                    <span className='font-semibold text-purple-800 block mb-1'>Summary</span>
+                                                    <p className="text-purple-700 leading-relaxed">{summary}</p>
+                                                </div>
+                                            )}
+
+                                            <div>
+                                                <span className='font-semibold text-purple-800 block mb-1'>Description</span>
+                                                <p className="text-purple-700 leading-relaxed">{description}</p>
+                                            </div>
+
+                                            {/* Dates */}
+                                            {(startDateTime || endDateTime) && (
+                                                <div className="bg-purple-50/50 rounded-lg p-3 space-y-2">
+                                                    {startDateTime && (
+                                                        <div className="flex items-center gap-2">
+                                                            <Clock size={14} className="text-purple-600" />
+                                                            <span className="text-xs text-purple-600 font-medium">Start:</span>
+                                                            <span className="text-xs text-purple-700">{new Date(startDateTime).toLocaleString()}</span>
+                                                        </div>
+                                                    )}
+                                                    {endDateTime && (
+                                                        <div className="flex items-center gap-2">
+                                                            <Clock size={14} className="text-purple-600" />
+                                                            <span className="text-xs text-purple-600 font-medium">End:</span>
+                                                            <span className="text-xs text-purple-700">{new Date(endDateTime).toLocaleString()}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Calendar Integration */}
+                                            <div className="flex items-center justify-between pt-2 border-t border-purple-100">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border ${linkedWithGoogleCalendar
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        : 'bg-rose-50 text-rose-700 border-rose-200'
+                                                        }`}>
+                                                        {linkedWithGoogleCalendar ? "✓ Synced" : "⚠ Not Synced"}
+                                                    </span>
+                                                </div>
+
+                                                {!linkedWithGoogleCalendar && (
+                                                    <button
+                                                        onClick={async () => {
+                                                            await handleSyncWithGoogle([{ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, googleTaskId }]);
+                                                        }}
+                                                        className='p-2 hover:bg-purple-100 rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer'
+                                                    >
+                                                        <FcCalendar className='text-lg' />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
-                )}
+
+                    {/* Empty State */}
+                    {userTasks?.length === 0 && (
+                        <div className="text-center py-20">
+                            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center">
+                                <Plus size={32} className="text-purple-600" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-purple-800 mb-2">No tasks yet</h3>
+                            <p className="text-purple-600 mb-6 max-w-md mx-auto">Create your first task to get started with organizing your workflow and boosting productivity.</p>
+                            <button
+                                className='cursor-pointer bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium'
+                                onClick={() => {
+                                    setTaskForm({
+                                        initialState: { title: "", description: "", status: "pending", summary: "", startDateTime: "", endDateTime: "" },
+                                        type: 'add',
+                                        onSubmit: handleAddTask,
+                                        show: true,
+                                    });
+                                }}
+                            >
+                                Create Your First Task
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Task Form Modal */}
@@ -419,24 +522,28 @@ const UserDashboard = () => {
                 />
             )}
 
-
-            {
-                !taskForm.show &&
-                <div className='my-third-step flex flex-col gap-2 absolute bottom-5 right-5 sm:hidden'>
+            {/* Mobile Floating Buttons */}
+            {!taskForm.show && (
+                <div className='flex flex-col gap-4 fixed bottom-6 right-6 sm:hidden z-50'>
                     <button
-                        className={`p-3 syncBtn ${unsyncedTasks.length > 0 && "animation"} text-white rounded-full border-blue-800 my-third-step`}
+                        className={`group relative p-4 text-white rounded-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-110 ${unsyncedTasks.length > 0 && "animate-pulse"}`}
                         onClick={async () => {
                             await handleSyncWithGoogle(unsyncedTasks);
                         }}
                     >
                         {unsyncedTasks.length > 0 ?
-                            <CalendarDays size={20} /> :
-                            <CalendarCheck size={20} />
+                            <CalendarDays size={22} /> :
+                            <CalendarCheck size={22} />
                         }
+                        {unsyncedTasks.length > 0 && (
+                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                <span className="text-xs text-white font-bold">{unsyncedTasks.length}</span>
+                            </div>
+                        )}
                     </button>
 
                     <button
-                        className='my-fourth-step bg-blue-500 rounded-full p-3 text-white text-xl'
+                        className='my-fourth-step group bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-full p-4 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-110'
                         onClick={() => {
                             setTaskForm({
                                 initialState: { title: "", description: "", status: "pending", summary: "", startDateTime: "", endDateTime: "" },
@@ -446,10 +553,10 @@ const UserDashboard = () => {
                             });
                         }}
                     >
-                        <Plus size={20} className="sm:w-5 sm:h-5" />
+                        <Plus size={22} className="group-hover:rotate-90 transition-transform duration-300" />
                     </button>
                 </div>
-            }
+            )}
 
             {/* <Joyride
                 steps={steps}
@@ -465,8 +572,7 @@ const UserDashboard = () => {
                 }}
                 callback={handleJoyrideCallback}
             /> */}
-        </>
-
+        </div>
     );
 };
 

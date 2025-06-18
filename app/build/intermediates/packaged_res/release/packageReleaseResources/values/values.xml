@@ -28,7 +28,7 @@
     <string name="hostName" translatable="false">task-manager-umber-nu.vercel.app</string>
     <string name="launchUrl" translatable="false">https://task-manager-umber-nu.vercel.app/</string>
     <string name="launcherName" translatable="false">Tasks</string>
-    <string name="orientation" translatable="false">portrait</string>
+    <string name="orientation" translatable="false">default</string>
     <string name="providerAuthority" translatable="false">app.vercel.task_manager_umber_nu.twa.fileprovider</string>
     <string name="webManifestUrl" translatable="false">https://task-manager-umber-nu.vercel.app/manifest.json</string>
 </resources>

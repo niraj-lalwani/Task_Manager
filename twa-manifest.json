@@ -3,7 +3,7 @@
   "host": "task-manager-umber-nu.vercel.app",
   "name": "Task Manager",
   "launcherName": "Tasks",
-  "display": "fullscreen-sticky",
+  "display": "fullscreen",
   "themeColor": "#0F62FE",
   "themeColorDark": "#000000",
   "navigationColor": "#000000",

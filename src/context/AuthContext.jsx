@@ -9,7 +9,7 @@ const AuthContext = createContext()
 const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(false)
     const [isLoading, setIsLoading] = useState(true);
-    const [isLoogedIn, setIsLoogedIn] = useState(false);
+    const [isLoogedIn, setIsLoogedIn] = useState(true);
     const [firebaseUserObj, setFirebaseUserObj] = useState({})
 
 

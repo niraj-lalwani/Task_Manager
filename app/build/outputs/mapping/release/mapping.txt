@@ -3,8 +3,8 @@
 # min_api: 21
 # common_typos_disable
 # {"id":"com.android.tools.r8.mapping","version":"2.2"}
-# pg_map_id: fa74953
-# pg_map_hash: SHA-256 fa74953af7977adde7c2287336b1788397bf8db6e785a53e59d12e0df30e13ca
+# pg_map_id: a66dc17
+# pg_map_hash: SHA-256 a66dc171ecf995052ca5378dfea692bb8f7074db6264d77a2fac2d7bacf60fef
 android.support.customtabs.ICustomTabsCallback -> a.a:
 # {"id":"sourceFile","fileName":"ICustomTabsCallback.java"}
     java.lang.String DESCRIPTOR -> a
@@ -22707,9 +22707,9 @@ app.vercel.task_manager_umber_nu.twa.LauncherActivity -> app.vercel.task_manager
     1:4:void <init>():25:25 -> <init>
     1:5:android.net.Uri getLaunchingUrl():48:48 -> i
     1:3:void onCreate(android.os.Bundle):33:33 -> onCreate
-    4:11:void onCreate(android.os.Bundle):38:38 -> onCreate
-    12:16:void onCreate(android.os.Bundle):39:39 -> onCreate
-    17:20:void onCreate(android.os.Bundle):41:41 -> onCreate
+    4:10:void onCreate(android.os.Bundle):38:38 -> onCreate
+    11:14:void onCreate(android.os.Bundle):39:39 -> onCreate
+    15:18:void onCreate(android.os.Bundle):41:41 -> onCreate
 com.google.androidbrowserhelper.R$drawable -> I.a:
     int ic_site_settings -> a
 com.google.androidbrowserhelper.R$string -> I.b:
