@@ -180,7 +180,7 @@ const TaskForm = ({ type, initialState, onSubmit, onCloseClick }) => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="px-8 pb-8">
+                        <div className="px-3 sm:px-6 md:px-8 pb-8">
                             <div className='flex flex-col sm:flex-row gap-4 sm:justify-between'>
                                 <button
                                     type="submit"
