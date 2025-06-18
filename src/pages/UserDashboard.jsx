@@ -6,7 +6,6 @@ import { Plus, SquarePen, Trash2, CalendarDays, CalendarCheck, Clock, CheckCircl
 import { toast } from 'react-toastify';
 import Header from '../components/Header'
 
-// import Joyride from 'react-joyride';
 
 import TaskForm from '../components/TaskForm';
 import {
@@ -27,22 +26,12 @@ const API_KEY = import.meta.env.VITE_API_KEY;
 
 const UserDashboard = () => {
     const { user } = useAuth();
+    console.log('user: ', user);
 
     const [taskForm, setTaskForm] = useState({ type: '', initialState: {}, show: false });
     const [userTasks, setUserTasks] = useState([]);
     const [unsyncedTasks, setUnsyncedTasks] = useState([]);
-    const [runJoyride, setRunJoyride] = useState(true);
-    const steps = [
-        {
-            target: ".my-first-step, .my-fourth-step", // Desktop + Mobile Add Task button
-            content: "Click here to add a new task",
-        },
-        {
-            target: ".my-second-step, .my-third-step", // Desktop + Mobile Sync button
-            content: "Sync your tasks with Google",
-        },
 
-    ];
 
     const gapiClientLoaded = useRef(false);
     const tokenClient = useRef(null);
@@ -159,6 +148,18 @@ const UserDashboard = () => {
         }
     };
 
+    // ------------------ STATUS TOGGLE ------------------
+    const handleStatusToggle = async (task) => {
+        const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+        const updatedTask = { ...task, status: newStatus };
+
+        try {
+            await handleEditTask(updatedTask);
+        } catch (error) {
+            toast.error("Failed to update task status.");
+        }
+    };
+
     // ------------------ SYNC TO GOOGLE ------------------
 
     const handleSyncWithGoogle = async (tasksToSync) => {
@@ -252,18 +253,13 @@ const UserDashboard = () => {
     // ------------------ LIFECYCLE ------------------
 
     useEffect(() => {
-        getUserTaskList();
-        getUnsyncTask();
-        if (!localStorage.getItem('hasSeenDashboardTour')) setRunJoyride(true);
-    }, []);
-
-
-    const handleJoyrideCallback = (data) => {
-        const { status } = data;
-        if (["finished", "skipped"].includes(status)) {
-            setRunJoyride(false); // End of tour
+        if (user) {
+            getUserTaskList();
+            getUnsyncTask();
         }
-    }
+    }, [user]);
+
+
 
     // Helper function to get status icon and styling
     const getStatusDetails = (status) => {
@@ -274,12 +270,7 @@ const UserDashboard = () => {
                     className: 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-emerald-100',
                     gradient: 'from-emerald-400 to-emerald-500'
                 };
-            case 'in-progress':
-                return {
-                    icon: <PlayCircle size={14} />,
-                    className: 'bg-amber-50 text-amber-700 border-amber-200 shadow-amber-100',
-                    gradient: 'from-amber-400 to-amber-500'
-                };
+
             default:
                 return {
                     icon: <Clock size={14} />,
@@ -374,8 +365,11 @@ const UserDashboard = () => {
                 {/* Tasks Grid */}
                 <div className='w-full px-4 sm:px-6 lg:px-8 pb-6 mt-5 sm:mt-0'>
                     <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
-                        {userTasks?.map(({ title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, googleTaskId }) => {
+                        {userTasks?.map((task) => {
+                            const { title, description, status, id, summary, startDateTime, endDateTime, linkedWithGoogleCalendar, googleEventId, googleTaskId } = task;
                             const statusDetails = getStatusDetails(status);
+                            const isCompleted = status === 'completed';
+
                             return (
                                 <div key={id} className='group relative bg-white/80 backdrop-blur-md rounded-2xl border border-purple-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 overflow-hidden'>
                                     {/* Status Indicator Bar */}
@@ -385,10 +379,10 @@ const UserDashboard = () => {
                                     <div className="p-5">
                                         {/* Title and Actions Row */}
                                         <div className="flex justify-between items-start mb-4">
-                                            <h3 className="font-bold text-lg text-purple-900 truncate pr-2 group-hover:text-purple-700 transition-colors">
+                                            <h3 className={`font-bold text-lg truncate pr-2 group-hover:text-purple-700 transition-colors ${isCompleted ? 'text-purple-500 line-through' : 'text-purple-900'}`}>
                                                 {title}
                                             </h3>
-                                            <div className='flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300'>
+                                            <div className='flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all duration-300'>
                                                 <button
                                                     className='p-2 hover:bg-purple-100 rounded-lg transition-all duration-200 hover:scale-110 text-purple-600 cursor-pointer'
                                                     onClick={() => {
@@ -413,12 +407,32 @@ const UserDashboard = () => {
                                             </div>
                                         </div>
 
-                                        {/* Status Badge */}
+                                        {/* Status Checkbox */}
                                         <div className="mb-4">
-                                            <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border ${statusDetails.className} shadow-sm`}>
-                                                {statusDetails.icon}
-                                                {status}
-                                            </span>
+                                            <label className="flex items-center gap-3 cursor-pointer select-none">
+                                                <div className="relative">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isCompleted}
+                                                        onChange={() => handleStatusToggle(task)}
+                                                        className="sr-only"
+                                                    />
+                                                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 ${isCompleted
+                                                        ? 'bg-emerald-500 border-emerald-500'
+                                                        : 'bg-white border-purple-300 hover:border-purple-400'
+                                                        }`}>
+                                                        {isCompleted && (
+                                                            <CheckCircle2 size={12} className="text-white" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <span className={`text-sm font-medium transition-colors ${isCompleted
+                                                    ? 'text-emerald-700'
+                                                    : 'text-purple-700'
+                                                    }`}>
+                                                    {isCompleted ? 'Completed' : 'Mark as Complete'}
+                                                </span>
+                                            </label>
                                         </div>
 
                                         {/* Description */}
@@ -426,13 +440,13 @@ const UserDashboard = () => {
                                             {summary && (
                                                 <div>
                                                     <span className='font-semibold text-purple-800 block mb-1'>Summary</span>
-                                                    <p className="text-purple-700 leading-relaxed">{summary}</p>
+                                                    <p className={`leading-relaxed ${isCompleted ? 'text-purple-500' : 'text-purple-700'}`}>{summary}</p>
                                                 </div>
                                             )}
 
                                             <div>
                                                 <span className='font-semibold text-purple-800 block mb-1'>Description</span>
-                                                <p className="text-purple-700 leading-relaxed">{description}</p>
+                                                <p className={`leading-relaxed ${isCompleted ? 'text-purple-500' : 'text-purple-700'}`}>{description}</p>
                                             </div>
 
                                             {/* Dates */}
@@ -558,20 +572,6 @@ const UserDashboard = () => {
                 </div>
             )}
 
-            {/* <Joyride
-                steps={steps}
-                run={runJoyride}
-                continuous
-                scrollToFirstStep
-                showSkipButton
-                showProgress
-                styles={{
-                    options: {
-                        zIndex: 10000,
-                    },
-                }}
-                callback={handleJoyrideCallback}
-            /> */}
         </div>
     );
 };

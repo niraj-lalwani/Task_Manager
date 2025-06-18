@@ -197,3 +197,77 @@ html {
 .react-calendar__tile:hover {
   background-color: rgba(51, 127, 234, 0.54) !important;
 }
+
+
+
+
+/* */
+/* Custom Scrollbar Styles for WebKit browsers (Chrome, Safari, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  /* Default width for desktop */
+  height: 8px;
+  /* For horizontal scrollbars, if any */
+}
+
+/* Track behind the scrollbar thumb */
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  /* Makes the track transparent or nearly so */
+  border-radius: 4px;
+  /* Rounded corners for the track */
+}
+
+/* The draggable scrolling handle */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #a855f7, #8b5cf6);
+  /* Purple-600 to Indigo-600 */
+  border-radius: 4px;
+  /* Rounded corners for the thumb */
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  /* Subtle border matching indigo */
+}
+
+/* On hover, make the scrollbar thumb slightly darker */
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #9333ea, #7c3aed);
+  /* Darker shades for hover */
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+/* Adjust scrollbar width for smaller screens (mobile) */
+@media (max-width: 768px) {
+
+  /* Adjust breakpoint as needed for 'sm' */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    /* Slightly narrower on mobile */
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+  }
+}
+
+@media (max-width: 640px) {
+
+  /* Adjust breakpoint as needed for 'xs' */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    /* Even narrower on very small screens */
+    height: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    border-radius: 2px;
+  }
+}
+
+/* For Firefox (different syntax) */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  /* "auto" or "thin" */
+  scrollbar-color: #8b5cf6 transparent;
+  /* thumb and track color */
+}
