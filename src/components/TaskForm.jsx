@@ -30,7 +30,7 @@ const TaskForm = ({ type, initialState, onSubmit, onCloseClick }) => {
                     <form className='bg-white/90 backdrop-blur-xl rounded-3xl border border-purple-200/50 shadow-2xl shadow-purple-100/20 overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar'> {/* Added custom-scrollbar class here */}
 
                         {/* Header Section with Gradient */}
-                        <div className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700 p-3 sm:p-6 md:p-8 pb-12">
+                        <div className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700 p-8 pb-12">
                             {/* Close Button */}
                             <button
                                 type="button"
