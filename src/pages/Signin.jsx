@@ -74,7 +74,7 @@ const Signin = () => {
                             {/* Google Login Button */}
                             <button
                                 onClick={handleGoogleLogin}
-                                className='cursor-pointer group relative w-full overflow-hidden bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-800 px-6 py-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] font-semibold flex items-center justify-center gap-4'
+                                className='cursor-pointer group relative w-full overflow-hidden bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-800 px-6 py-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] font-semibold flex items-center justify-center gap-1 sm:gap-4'
 
                             >
                                 {/* Google Logo */}
